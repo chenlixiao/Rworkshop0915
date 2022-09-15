@@ -5,10 +5,8 @@ output: html_notebook
 
 packages
 ```{r}
-library(haven)
-library(ggplot2)
-library(dplyr)
 library(gt)
+library(tidyverse)
 ```
 
 Import dataset
@@ -38,12 +36,46 @@ adae %>%
 
 Prep data
 ```{r}
+pop <- adsl %>%
+  filter(SAFFL == "Y") %>%
+  rename(TRTAN = TRT01AN) %>%
+  count(TRTAN, name = "tot")
 
-```
+pop
 
-Viz
-```{r}
+tidy_ae <- adae %>%
+  mutate(
+    all = SAFFL == "Y",
+    drug = AEREL %in% c("POSSIBLE", "PROBABLE"),
+    ser = AESER == "Y",
+    drug_ser = drug & ser,
+    die = AEOUT == "FATAL"
+  ) %>%
+  select(USUBJID, TRTAN, all, drug, ser, drug_ser, die) %>%
+  pivot_longer(cols = c(all, drug, ser, drug_ser, die))
 
+tidy_ae %>% head(4)
+
+fmt_num <- function(x, digits, width = digits + 4) {
+  formatC(x,
+    digits = digits,
+    format = "f",
+    width = width
+  )
+}
+
+ana <- tidy_ae %>%
+  filter(value == TRUE) %>%
+  group_by(TRTAN, name) %>%
+  summarise(n = n_distinct(USUBJID)) %>%
+  left_join(pop, by = "TRTAN") %>%
+  mutate(
+    pct = fmt_num(n / tot * 100, digits = 1),
+    n = fmt_num(n, digits = 0),
+    pct = paste0("(", pct, ")")
+  )
+
+ana %>% head(4)
 ```
 
 Table
