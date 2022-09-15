@@ -76,9 +76,19 @@ ana <- tidy_ae %>%
   )
 
 ana %>% head(4)
+
+ggplot(adsl) +
+  aes(x = ARM, fill = DCDECOD) +
+  geom_bar() +
+  scale_fill_hue(direction = 1) +
+  theme_minimal()
 ```
 
 Table
 ```{r}
-
+ana %>%
+  gt()%>%
+  tab_header(
+    title = md("AE"), subtitle = md("workshop")
+  )
 ```
